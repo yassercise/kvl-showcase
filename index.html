@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F3F4F5">
+<title>KVL Showcase</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
+<style>
+@property --tint { syntax: '<color>'; inherits: true; initial-value: #c9d1d8; }
+
+:root {
+  --paper: #F3F4F5;
+  --white: #FFFFFF;
+  --ink: #15181B;
+  --ink2: #48505A;
+  --mute: #78818B;
+  --line: #DCE0E4;
+  --blue: #2E6790;
+  --blue-deep: #24526F;
+  --orange: #DB7B2B;
+  --ease: cubic-bezier(.2,.8,.2,1);
+  --tint: #c9d1d8;
+  font-family: 'Archivo', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; background: var(--paper); overflow: hidden; color: var(--ink); }
+body { font-stretch: 100%; font-variant-numeric: tabular-nums; -webkit-user-select: none; user-select: none; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+input { font: inherit; color: inherit; }
+img { display: block; -webkit-user-drag: none; }
+:focus-visible { outline: 4px solid var(--blue); outline-offset: 4px; }
+
+#viewport { position: fixed; inset: 0; background: var(--paper); overflow: hidden; }
+#app { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; overflow: hidden; background: var(--paper); }
+
+/* ---------- top bar ---------- */
+#top { position: absolute; inset: 0 0 auto 0; height: 112px; display: flex; align-items: center; padding: 0 64px 0 72px; z-index: 30; }
+#top .left { display: flex; align-items: center; gap: 36px; flex: 1; }
+#top .right { flex: 1; display: flex; justify-content: flex-end; gap: 16px; min-height: 80px; align-items: center; }
+#logoBtn img { height: 62px; width: auto; }
+.backBtn { height: 72px; padding: 0 30px 0 20px; border-radius: 36px; display: flex; align-items: center; gap: 8px; font-size: 26px; font-weight: 600; color: var(--ink2); background: #fff; box-shadow: inset 0 0 0 2px var(--line); transition: transform .2s var(--ease), box-shadow .2s; }
+.backBtn:active { transform: scale(.96); }
+.backBtn svg { width: 32px; height: 32px; }
+.hidden { display: none !important; }
+
+.switch { position: relative; display: flex; padding: 8px; background: #fff; border-radius: 52px; box-shadow: inset 0 0 0 2px var(--line); }
+.switch .pill { position: absolute; top: 8px; bottom: 8px; left: 0; width: 0; border-radius: 44px; background: var(--ink); transition: transform .5s var(--ease), width .5s var(--ease); }
+.switch button { position: relative; z-index: 1; height: 80px; min-width: 232px; padding: 0 34px; border-radius: 44px; display: flex; align-items: center; justify-content: center; gap: 16px; font-size: 27px; font-weight: 600; letter-spacing: .005em; color: var(--ink2); transition: color .35s; }
+.switch button img { height: 30px; width: auto; transition: filter .35s; }
+.switch button.on { color: #fff; }
+.switch button.on img.dk { filter: brightness(0) invert(1); }
+.switch button .nm { font-stretch: 112%; font-weight: 700; }
+
+.primary { height: 80px; padding: 0 40px; border-radius: 40px; background: var(--blue); color: #fff; font-size: 28px; font-weight: 700; display: inline-flex; align-items: center; gap: 14px; box-shadow: 0 10px 24px -10px rgba(36,82,111,.7); transition: transform .2s var(--ease), background .25s, box-shadow .25s; }
+.primary:hover { background: var(--blue-deep); }
+.primary:active { transform: scale(.96); }
+.primary svg { width: 34px; height: 34px; }
+.primary[disabled] { background: #b9c3cb; box-shadow: none; cursor: default; }
+.ghost { height: 72px; padding: 0 30px; border-radius: 36px; font-size: 26px; font-weight: 600; box-shadow: inset 0 0 0 2px var(--line); background: #fff; color: var(--ink); display: inline-flex; align-items: center; gap: 12px; transition: transform .2s var(--ease); }
+.ghost:active { transform: scale(.96); }
+.ghost svg { width: 30px; height: 30px; }
+
+/* ---------- screens ---------- */
+.screen { position: absolute; inset: 0; opacity: 0; pointer-events: none; transition: opacity .45s ease; }
+.screen.on { opacity: 1; pointer-events: auto; }
+
+/* ---------- fleet ---------- */
+#fleet .intro { position: absolute; left: 72px; top: 150px; }
+#fleet h1 { font-size: 92px; font-weight: 800; font-stretch: 122%; letter-spacing: -.02em; line-height: 1; }
+#fleet .sub { margin-top: 20px; font-size: 28px; color: var(--ink2); max-width: 1100px; line-height: 1.35; }
+#tiles { position: absolute; left: 72px; right: 72px; top: 370px; bottom: 56px; display: flex; gap: 40px; }
+.tile { position: relative; flex: 1; border-radius: 44px; overflow: hidden; text-align: left; background: #fff; box-shadow: 0 30px 60px -36px rgba(20,30,40,.35), inset 0 0 0 2px rgba(20,30,40,.05); transition: transform .5s var(--ease), box-shadow .5s var(--ease), opacity .4s, flex .5s var(--ease); --tint: #c9d1d8; }
+.tile::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 70% 60% at 50% 64%, color-mix(in srgb, var(--tint) 34%, #fff) 0%, #fff 72%); transition: background .6s; }
+.tile:hover { transform: translateY(-8px); box-shadow: 0 44px 70px -34px rgba(20,30,40,.45), inset 0 0 0 2px rgba(20,30,40,.05); }
+.tile:active { transform: scale(.985); }
+.tile .ghostname { position: absolute; left: 0; right: 0; top: 40px; text-align: center; font-size: 250px; font-weight: 800; font-stretch: 125%; letter-spacing: -.03em; line-height: 1; color: color-mix(in srgb, var(--tint) 16%, #edeff1); white-space: nowrap; pointer-events: none; }
+.tile .carimg { position: absolute; left: 50%; top: 104px; height: 300px; width: auto; transform: translateX(-50%); }
+.tile .meta { position: absolute; left: 44px; right: 44px; bottom: 40px; display: flex; align-items: flex-end; justify-content: space-between; }
+.tile .meta .l img { height: 28px; width: auto; margin-bottom: 14px; }
+.tile .meta .nm { font-size: 60px; font-weight: 800; font-stretch: 118%; letter-spacing: -.01em; line-height: 1; }
+.tile .meta .desc { margin-top: 12px; font-size: 26px; color: var(--ink2); }
+.tile .go { width: 84px; height: 84px; border-radius: 50%; background: var(--ink); color: #fff; display: grid; place-items: center; transition: transform .35s var(--ease); }
+.tile:hover .go { transform: translateX(6px); }
+.tile .go svg { width: 38px; height: 38px; }
+.tile.hide { opacity: 0; pointer-events: none; flex: 0.0001; padding: 0; min-width: 0; }
+
+/* ---------- detail ---------- */
+#detail { --tint: #c9d1d8; transition: --tint .7s ease; }
+#detail .halo { position: absolute; left: 560px; right: 60px; top: 150px; height: 780px; background: radial-gradient(ellipse 50% 50% at 50% 56%, color-mix(in srgb, var(--tint) 46%, #fff) 0%, color-mix(in srgb, var(--tint) 14%, #fff) 45%, rgba(255,255,255,0) 72%); pointer-events: none; }
+#detail .floor { position: absolute; left: 0; right: 0; bottom: 0; height: 180px; background: linear-gradient(180deg, rgba(255,255,255,0), #fff 62%); pointer-events: none; }
+#detail .ghost-word { position: absolute; left: 500px; right: 20px; top: 150px; text-align: center; font-weight: 800; font-stretch: 125%; letter-spacing: -.035em; line-height: 1; color: color-mix(in srgb, var(--tint) 20%, #eceef0); white-space: nowrap; pointer-events: none; }
+
+#info { position: absolute; left: 72px; top: 150px; width: 400px; z-index: 5; }
+#info .brandlogo { height: 34px; width: auto; }
+#info .nm { margin-top: 22px; font-size: 64px; font-weight: 800; font-stretch: 122%; letter-spacing: -.02em; line-height: 1; }
+#info .tag { margin-top: 18px; font-size: 25px; line-height: 1.38; color: var(--ink2); }
+#info .lbl { margin-top: 30px; font-size: 22px; font-weight: 600; color: var(--mute); }
+#trims { margin-top: 12px; display: flex; flex-direction: column; gap: 10px; }
+.trim { height: 76px; border-radius: 26px; padding: 0 26px; display: flex; align-items: center; gap: 18px; text-align: left; background: #fff; box-shadow: inset 0 0 0 2px var(--line); transition: background .3s, color .3s, box-shadow .3s, transform .2s var(--ease); }
+.trim:active { transform: scale(.97); }
+.trim .a { font-size: 36px; font-weight: 800; font-stretch: 118%; min-width: 88px; }
+.trim .b { flex: 1; font-size: 26px; font-weight: 600; }
+.trim .c { font-size: 21px; color: var(--mute); text-align: right; line-height: 1.2; }
+.trim.on { background: var(--ink); color: #fff; box-shadow: none; }
+.trim.on .c { color: rgba(255,255,255,.65); }
+#info .allspecs { margin-top: 22px; height: 64px; width: 100%; justify-content: center; }
+
+#stage { position: absolute; left: 500px; right: 20px; top: 112px; height: 660px; touch-action: pan-y; cursor: grab; z-index: 3; }
+#stage.drag { cursor: grabbing; }
+#carwrap { position: absolute; left: 50%; top: 0; width: 1140px; height: 100%; transform: translateX(-50%); will-change: transform, opacity; }
+#carwrap .shadow { position: absolute; left: 12%; right: 12%; bottom: 86px; height: 46px; background: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(10,16,22,.34), rgba(10,16,22,0) 72%); filter: blur(6px); }
+#carwrap img.car { position: absolute; left: 50%; bottom: 84px; transform: translateX(-50%); width: 1060px; height: auto; transition: opacity .42s ease; pointer-events: none; }
+#carwrap img.car.off { opacity: 0; }
+.soft { -webkit-mask-image: radial-gradient(ellipse 62% 66% at 50% 44%, #000 84%, transparent 100%); mask-image: radial-gradient(ellipse 62% 66% at 50% 44%, #000 84%, transparent 100%); }
+.tile .carimg.soft, #mCar.soft { -webkit-mask-image: radial-gradient(ellipse 62% 66% at 50% 44%, #000 84%, transparent 100%); mask-image: radial-gradient(ellipse 62% 66% at 50% 44%, #000 84%, transparent 100%); }
+.navArrow { position: absolute; top: 250px; width: 92px; height: 92px; border-radius: 50%; background: #fff; box-shadow: 0 16px 30px -12px rgba(20,30,40,.4), inset 0 0 0 2px var(--line); display: grid; place-items: center; z-index: 6; transition: transform .25s var(--ease); }
+.navArrow:active { transform: scale(.92); }
+.navArrow svg { width: 40px; height: 40px; }
+#prevBtn { left: 512px; }
+#nextBtn { right: 32px; }
+
+#colors { position: absolute; left: 500px; right: 20px; top: 782px; display: flex; flex-direction: column; align-items: center; z-index: 6; }
+#swatches { display: flex; gap: 22px; }
+.sw { position: relative; width: 88px; height: 88px; border-radius: 50%; transition: transform .3s var(--ease); }
+.sw:active { transform: scale(.9); }
+.sw i { position: absolute; inset: 10px; border-radius: 50%; box-shadow: inset 0 0 0 2px rgba(0,0,0,.14), inset 0 -10px 16px -6px rgba(0,0,0,.25), inset 0 8px 12px -6px rgba(255,255,255,.55); }
+.sw::after { content: ''; position: absolute; inset: 0; border-radius: 50%; box-shadow: 0 0 0 0 var(--ink); transition: box-shadow .3s var(--ease); }
+.sw.on::after { box-shadow: 0 0 0 4px var(--ink); }
+.sw.on { transform: scale(1.06); }
+#colorName { margin-top: 14px; height: 40px; font-size: 30px; font-weight: 700; font-stretch: 108%; }
+#colorName small { font-size: 24px; font-weight: 500; color: var(--mute); margin-left: 12px; font-stretch: 100%; }
+
+#kpis { position: absolute; left: 72px; right: 72px; bottom: 34px; height: 104px; display: flex; z-index: 6; }
+.kpi { flex: 1; padding: 0 0 0 34px; border-left: 2px solid var(--line); display: flex; flex-direction: column; justify-content: center; }
+.kpi:first-child { border-left: 0; padding-left: 0; }
+.kpi .v { font-size: 56px; font-weight: 800; font-stretch: 112%; letter-spacing: -.015em; line-height: 1; }
+.kpi .v u { text-decoration: none; font-size: 26px; font-weight: 600; margin-left: 8px; color: var(--ink2); font-stretch: 100%; letter-spacing: 0; }
+.kpi .t { margin-top: 8px; font-size: 22px; color: var(--mute); }
+
+/* ---------- spec panel ---------- */
+#scrim { position: absolute; inset: 0; background: rgba(21,24,27,.38); opacity: 0; pointer-events: none; transition: opacity .45s ease; z-index: 40; backdrop-filter: blur(3px); }
+#scrim.on { opacity: 1; pointer-events: auto; }
+#panel { position: absolute; top: 0; right: 0; bottom: 0; width: 1200px; background: #fff; z-index: 41; transform: translateX(104%); transition: transform .6s var(--ease); display: flex; flex-direction: column; box-shadow: -40px 0 80px -30px rgba(0,0,0,.35); border-radius: 44px 0 0 44px; }
+#panel.on { transform: translateX(0); }
+#panel header { padding: 48px 56px 24px; display: flex; align-items: flex-start; justify-content: space-between; }
+#panel h2 { font-size: 56px; font-weight: 800; font-stretch: 118%; letter-spacing: -.015em; line-height: 1.05; }
+#panel .psub { margin-top: 10px; font-size: 26px; color: var(--ink2); }
+.closeBtn { width: 84px; height: 84px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--line); display: grid; place-items: center; transition: transform .2s var(--ease); flex: none; }
+.closeBtn:active { transform: scale(.9); }
+.closeBtn svg { width: 36px; height: 36px; }
+#ptabs { padding: 0 56px; display: flex; gap: 40px; border-bottom: 2px solid var(--line); }
+#ptabs button { position: relative; height: 84px; font-size: 28px; font-weight: 700; color: var(--mute); transition: color .25s; }
+#ptabs button.on { color: var(--ink); }
+#ptabs button::after { content: ''; position: absolute; left: 0; right: 0; bottom: -2px; height: 6px; border-radius: 3px; background: var(--ink); transform: scaleX(0); transition: transform .4s var(--ease); }
+#ptabs button.on::after { transform: scaleX(1); }
+#ptrims { padding: 24px 56px 0; display: flex; gap: 12px; flex-wrap: wrap; }
+#ptrims .chip { height: 64px; padding: 0 28px; border-radius: 32px; font-size: 24px; font-weight: 700; box-shadow: inset 0 0 0 2px var(--line); background: #fff; transition: background .25s, color .25s; }
+#ptrims .chip.on { background: var(--ink); color: #fff; box-shadow: none; }
+#pbody { flex: 1; overflow-y: auto; padding: 16px 56px 56px; -webkit-overflow-scrolling: touch; touch-action: pan-y; scrollbar-width: none; user-select: none; }
+#pbody::-webkit-scrollbar { display: none; }
+.sec { padding-top: 34px; }
+.sec h3 { font-size: 30px; font-weight: 800; font-stretch: 112%; margin-bottom: 8px; }
+.row { display: flex; justify-content: space-between; gap: 32px; align-items: baseline; padding: 20px 0; border-bottom: 2px solid #EEF0F2; font-size: 26px; }
+.row .k { color: var(--ink2); }
+.row .val { font-weight: 700; text-align: right; }
+.feat { display: flex; gap: 20px; align-items: flex-start; padding: 18px 0; border-bottom: 2px solid #EEF0F2; font-size: 26px; line-height: 1.3; }
+.feat svg { flex: none; width: 34px; height: 34px; margin-top: 1px; color: var(--blue); }
+.foot { margin-top: 36px; font-size: 21px; color: var(--mute); line-height: 1.4; }
+.pane-enter { animation: paneIn .5s var(--ease) both; }
+@keyframes paneIn { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+
+/* ---------- send modal ---------- */
+#modalWrap { position: absolute; inset: 0; z-index: 50; display: grid; place-items: center; opacity: 0; pointer-events: none; transition: opacity .4s ease; background: rgba(21,24,27,.42); backdrop-filter: blur(4px); }
+#modalWrap.on { opacity: 1; pointer-events: auto; }
+#modal { position: relative; width: 1400px; height: 780px; background: #fff; border-radius: 48px; overflow: hidden; display: flex; transform: translateY(40px) scale(.97); transition: transform .6s var(--ease); box-shadow: 0 60px 120px -40px rgba(0,0,0,.5); }
+#modalWrap.on #modal { transform: none; }
+#mLeft { width: 520px; padding: 48px; position: relative; background: radial-gradient(ellipse 90% 60% at 50% 70%, color-mix(in srgb, var(--mtint, #c9d1d8) 36%, #fff), #fff 78%); display: flex; flex-direction: column; }
+#mLeft .mlogo { height: 30px; width: auto; align-self: flex-start; }
+#mLeft .mcar { margin: 46px -20px 0; width: calc(100% + 40px); height: auto; }
+#mLeft .mname { margin-top: auto; font-size: 44px; font-weight: 800; font-stretch: 118%; line-height: 1.05; letter-spacing: -.01em; }
+#mLeft .mdesc { margin-top: 10px; font-size: 24px; color: var(--ink2); line-height: 1.35; }
+#mLeft .file { margin-top: 24px; display: flex; align-items: center; gap: 14px; padding: 16px 20px; border-radius: 20px; background: #fff; box-shadow: inset 0 0 0 2px var(--line); font-size: 21px; font-weight: 600; }
+#mLeft .file svg { width: 32px; height: 32px; color: #C4372B; flex: none; }
+#mRight { flex: 1; padding: 48px 56px; position: relative; }
+#mRight h2 { font-size: 46px; font-weight: 800; font-stretch: 116%; letter-spacing: -.015em; }
+#mRight .sub { margin-top: 10px; font-size: 25px; color: var(--ink2); }
+.seg { margin-top: 30px; display: inline-flex; padding: 6px; border-radius: 40px; background: #EEF0F2; position: relative; }
+.seg .pill { position: absolute; top: 6px; bottom: 6px; left: 6px; width: 200px; border-radius: 34px; background: #fff; box-shadow: 0 4px 12px -4px rgba(0,0,0,.25); transition: transform .45s var(--ease); }
+.seg button { position: relative; z-index: 1; width: 200px; height: 68px; border-radius: 34px; font-size: 26px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 12px; color: var(--ink2); transition: color .3s; }
+.seg button.on { color: var(--ink); }
+.seg button svg { width: 30px; height: 30px; }
+.field { margin-top: 20px; display: flex; align-items: center; height: 88px; border-radius: 26px; background: #F3F4F5; box-shadow: inset 0 0 0 2px transparent; transition: box-shadow .25s, background .25s; padding: 0 28px; gap: 16px; }
+.field:focus-within { background: #fff; box-shadow: inset 0 0 0 3px var(--blue); }
+.field.err { box-shadow: inset 0 0 0 3px #C4372B; }
+.field input { flex: 1; height: 100%; border: 0; background: none; outline: none; font-size: 30px; font-weight: 600; min-width: 0; user-select: text; -webkit-user-select: text; }
+.field input::placeholder { color: #98a1aa; font-weight: 500; }
+.field .pre { font-size: 28px; font-weight: 700; color: var(--ink2); padding-right: 16px; border-right: 2px solid var(--line); }
+.consent { margin-top: 22px; display: flex; gap: 18px; align-items: center; font-size: 22px; color: var(--ink2); line-height: 1.3; text-align: left; }
+.consent .box { flex: none; width: 44px; height: 44px; border-radius: 13px; box-shadow: inset 0 0 0 3px var(--line); display: grid; place-items: center; transition: background .25s, box-shadow .25s; }
+.consent .box svg { width: 28px; height: 28px; color: #fff; transform: scale(0); transition: transform .3s var(--ease); }
+.consent.on .box { background: var(--blue); box-shadow: none; }
+.consent.on .box svg { transform: scale(1); }
+#sendGo { position: absolute; left: 56px; right: 56px; bottom: 48px; height: 96px; justify-content: center; font-size: 30px; border-radius: 48px; }
+#mClose { position: absolute; right: 32px; top: 32px; z-index: 3; }
+#formView, #doneView { position: absolute; inset: 0; padding: 48px 56px; transition: opacity .4s ease, transform .5s var(--ease); }
+#doneView { opacity: 0; pointer-events: none; transform: translateY(24px); display: flex; flex-direction: column; }
+#modal.sent #formView { opacity: 0; pointer-events: none; transform: translateY(-24px); }
+#modal.sent #doneView { opacity: 1; pointer-events: auto; transform: none; }
+.spin { width: 34px; height: 34px; border-radius: 50%; border: 5px solid rgba(255,255,255,.35); border-top-color: #fff; animation: spin .8s linear infinite; display: none; }
+.sending .spin { display: block; }
+.sending .lab, .sending .ico { display: none; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.tick { width: 120px; height: 120px; }
+.tick circle { fill: none; stroke: #2E8B57; stroke-width: 6; stroke-dasharray: 340; stroke-dashoffset: 340; }
+.tick path { fill: none; stroke: #2E8B57; stroke-width: 8; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 80; stroke-dashoffset: 80; }
+#modal.sent .tick circle { animation: draw .8s .25s var(--ease) forwards; }
+#modal.sent .tick path { animation: draw .5s .8s var(--ease) forwards; }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+#doneView h2 { margin-top: 22px; font-size: 46px; font-weight: 800; font-stretch: 116%; letter-spacing: -.015em; }
+#doneView .sub { margin-top: 10px; font-size: 26px; color: var(--ink2); line-height: 1.35; }
+.bubble { margin-top: 28px; padding: 24px 26px; border-radius: 26px; background: #E7F5EC; font-size: 24px; line-height: 1.4; color: #17301F; max-width: 640px; text-align: left; }
+.bubble.mail { background: #F3F4F5; color: var(--ink); }
+.bubble b { display: block; margin-bottom: 8px; }
+.doneBtns { margin-top: auto; display: flex; gap: 16px; }
+
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; } }
+</style>
+</head>
+<body>
+<div id="viewport">
+<div id="app">
+
+  <header id="top">
+    <div class="left">
+      <button id="logoBtn" aria-label="Kanoo Vehicle Leasing, back to fleet"><img id="logoImg" alt="Kanoo Vehicle Leasing"></button>
+      <button class="backBtn hidden" id="backBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>Fleet</button>
+    </div>
+    <div class="switch hidden" id="carSwitch"></div>
+    <div class="right">
+      <button class="primary hidden" id="sendBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>Send brochure</button>
+    </div>
+  </header>
+
+  <!-- FLEET -->
+  <section class="screen on" id="fleet">
+    <div class="intro">
+      <h1>Our fleet</h1>
+      <p class="sub">Tap a car to explore trims, colours and specifications, then send the brochure straight to your phone.</p>
+    </div>
+    <div id="tiles"></div>
+  </section>
+
+  <!-- DETAIL -->
+  <section class="screen" id="detail">
+    <div class="halo"></div>
+    <div class="ghost-word" id="ghostWord"></div>
+    <div id="info">
+      <img class="brandlogo" id="brandLogo" alt="">
+      <div class="nm" id="carName"></div>
+      <p class="tag" id="carTag"></p>
+      <div class="lbl" id="trimLbl">Choose a trim</div>
+      <div id="trims"></div>
+      <button class="ghost allspecs" id="allSpecs"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>All specifications</button>
+    </div>
+    <div id="stage">
+      <div id="carwrap">
+        <div class="shadow" id="carShadow"></div>
+        <img class="car" id="carA" alt="">
+        <img class="car off" id="carB" alt="">
+      </div>
+    </div>
+    <button class="navArrow" id="prevBtn" aria-label="Previous car"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <button class="navArrow" id="nextBtn" aria-label="Next car"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+    <div id="colors">
+      <div id="swatches"></div>
+      <div id="colorName"></div>
+    </div>
+    <div class="floor"></div>
+    <div id="kpis"></div>
+  </section>
+
+  <div id="scrim"></div>
+  <aside id="panel" aria-label="Specifications">
+    <header>
+      <div><h2 id="pTitle"></h2><div class="psub" id="pSub"></div></div>
+      <button class="closeBtn" id="pClose" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </header>
+    <div id="ptabs"><button data-tab="specs" class="on">Specifications</button><button data-tab="features">Features</button></div>
+    <div id="ptrims"></div>
+    <div id="pbody"></div>
+  </aside>
+
+  <div id="modalWrap">
+    <div id="modal">
+      <button class="closeBtn" id="mClose" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <div id="mLeft">
+        <img class="mlogo" id="mLogo" alt="">
+        <img class="mcar" id="mCar" alt="">
+        <div class="mname" id="mName"></div>
+        <div class="mdesc" id="mDesc"></div>
+        <div class="file"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/><path d="M14 3v5h5"/></svg><span id="mFile"></span></div>
+      </div>
+      <div id="mRight">
+        <div id="formView">
+          <h2>Send the brochure</h2>
+          <p class="sub">The customer gets it instantly, on the channel they prefer.</p>
+          <div class="seg" id="seg"><div class="pill"></div>
+            <button data-ch="email" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 8l9 6 9-6"/></svg>Email</button>
+            <button data-ch="wa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l1.3-4.2A8 8 0 118 19z"/></svg>WhatsApp</button>
+          </div>
+          <div class="field" id="fName"><input id="inName" type="text" placeholder="Customer name" autocomplete="off"></div>
+          <div class="field" id="fContact"><span class="pre hidden" id="pre">+973</span><input id="inContact" type="email" placeholder="Email address" autocomplete="off"></div>
+          <button class="consent" id="consent" type="button"><span class="box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg></span><span>Customer agrees to receive this brochure and be contacted by Kanoo Vehicle Leasing.</span></button>
+          <button class="primary" id="sendGo"><span class="spin"></span><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg><span class="lab">Send brochure</span></button>
+        </div>
+        <div id="doneView">
+          <svg class="tick" viewBox="0 0 120 120"><circle cx="60" cy="60" r="54"/><path d="M36 62l16 16 32-34"/></svg>
+          <h2 id="doneH"></h2>
+          <p class="sub" id="doneS"></p>
+          <div class="bubble" id="bubble"></div>
+          <div class="doneBtns"><button class="ghost" id="again">Send to someone else</button><button class="primary" id="doneBtn" style="margin-left:auto">Done</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script>
+const IMG = {
+ "yaris-black": "img/yaris-black.webp",
+ "icaur-sahara-yellow": "img/icaur-sahara-yellow.webp",
+ "logo-icaur": "img/logo-icaur.webp",
+ "yaris-white": "img/yaris-white.webp",
+ "yaris-gray": "img/yaris-gray.webp",
+ "yaris-scarlet": "img/yaris-scarlet.webp",
+ "logo-toyota": "img/logo-toyota.webp",
+ "icaur-obsidian-black": "img/icaur-obsidian-black.webp",
+ "icaur-basalt-grey": "img/icaur-basalt-grey.webp",
+ "icaur-moonstone-white": "img/icaur-moonstone-white.webp",
+ "logo-kvl": "img/logo-kvl.webp",
+ "yaris-platinum": "img/yaris-platinum.webp",
+ "yaris-red": "img/yaris-red.webp"
+};
+
+/* ================= DATA ================= */
+const I = (n) => IMG[n];
+const soft = (el, name) => el.classList.toggle('soft', name.startsWith('yaris'));
+
+const yarisTrims = [
+  { id:'1.3-low',  a:'1.3L', b:'Low',  c:'70 kW',  power:'70', hp:'95.2', cc:'1,329', eng:'1.3-litre petrol (1NR-VE)', torque:'120 Nm (12.2 kgf.m) @ 4,200 rpm', out:'70 kW (95.2 hp) @ 6,000 rpm', weight:'1,030', rear:'Drum (solid disc with MID+ package)', tyres:'195/65R15 (195/60R16 with MID+ package)', wheels:'15-inch wheels', bags:'SRS airbags' },
+  { id:'1.3-high', a:'1.3L', b:'High', c:'70 kW',  power:'70', hp:'95.2', cc:'1,329', eng:'1.3-litre petrol (1NR-VE)', torque:'120 Nm (12.2 kgf.m) @ 4,200 rpm', out:'70 kW (95.2 hp) @ 6,000 rpm', weight:'1,060', rear:'Solid disc', tyres:'195/60R16', wheels:'16-inch aluminium wheels', bags:'6 airbags' },
+  { id:'1.5-low',  a:'1.5L', b:'Low',  c:'76 kW',  power:'76', hp:'103.3', cc:'1,496', eng:'1.5-litre petrol (2NR-VE)', torque:'136 Nm (13.9 kgf.m) @ 4,200 rpm', out:'76 kW (103.3 hp) @ 6,000 rpm', weight:'1,035', rear:'Drum', tyres:'195/65R15', wheels:'15-inch wheels', bags:'SRS airbags' },
+  { id:'1.5-high', a:'1.5L', b:'High', c:'76 kW',  power:'76', hp:'103.3', cc:'1,496', eng:'1.5-litre petrol (2NR-VE)', torque:'136 Nm (13.9 kgf.m) @ 4,200 rpm', out:'76 kW (103.3 hp) @ 6,000 rpm', weight:'1,065', rear:'Solid disc', tyres:'195/60R16', wheels:'16-inch aluminium wheels', bags:'6 airbags' },
+];
+
+const CARS = [
+  {
+    id:'yaris', brand:'Toyota', brandLogo:'logo-toyota', name:'Yaris', ghostSize:330, ghostTop:170,
+    type:'Compact sedan',
+    tag:'A confident compact sedan with a slanted fastback profile and a roomy cabin.',
+    desc:'Compact sedan, 1.3L or 1.5L',
+    imgW:1060, shadow:false, carBottom:70,
+    colors:[
+      { id:'scarlet',  name:'Scarlet',            sub:'Metallic', hex:'#C8401F', tint:'#E0583A', img:'yaris-scarlet' },
+      { id:'red',      name:'Red',                sub:'Mica metallic', hex:'#8E1226', tint:'#B01D36', img:'yaris-red' },
+      { id:'gray',     name:'Gray',               sub:'Metallic', hex:'#8B9094', tint:'#8B9094', img:'yaris-gray' },
+      { id:'platinum', name:'Platinum White Pearl', sub:'', hex:'#E3E6E8', tint:'#B9C4CC', img:'yaris-platinum' },
+      { id:'white',    name:'Super White',        sub:'', hex:'#F6F6F4', tint:'#C9D1D8', img:'yaris-white' },
+      { id:'black',    name:'Attitude Black',     sub:'Metallic', hex:'#1B1B1E', tint:'#4B5560', img:'yaris-black' },
+    ],
+    trims:yarisTrims,
+    defaultTrim:'1.5-high', defaultColor:'scarlet',
+    kpis:(t)=>[ {v:t.power,u:'kW',l:'Max power'}, {v:'CVT',u:'',l:'Transmission'}, {v:'5',u:'',l:'Seats'}, {v:'40',u:'L',l:'Fuel tank'} ],
+    specs:(t)=>[
+      { title:'Engine and performance', rows:[['Engine',t.eng],['Displacement',t.cc+' cc'],['Max output',t.out],['Max torque',t.torque],['Valve mechanism','16-valve DOHC with Dual VVT-i'],['Fuel system','EFI'],['Transmission','CVT (continuously variable)']] },
+      { title:'Dimensions and weight', rows:[['Length','4,425 mm'],['Width','1,740 mm'],['Height','1,480 mm'],['Wheelbase','2,620 mm'],['Ground clearance','160 mm'],['Curb weight',t.weight+' kg'],['Gross vehicle weight','1,460 kg'],['Seating','5 occupants']] },
+      { title:'Chassis', rows:[['Front suspension','MacPherson strut'],['Rear suspension','Torsion beam'],['Front brakes','Ventilated disc'],['Rear brakes',t.rear],['Tyres',t.tyres],['Turning radius','4.8 m'],['Fuel tank','40 litres']] },
+    ],
+    features:(t)=>[
+      { title:'Comfort and technology', items:['8-inch display audio with Apple CarPlay and Android Auto','7-inch TFT meter with digital speedometer','Smart entry and push-button start','Rear air-conditioning vents','Electric parking brake with brake hold','Large cup holders and multi-purpose console box'] },
+      { title:'Exterior', items:['LED headlamps','LED rear combination lamps',t.wheels] },
+      { title:'Safety', items:['Toyota Safety Sense: adaptive cruise control, lane departure warning and prevention, pre-collision warning with braking assist, front departure alert','Pedal misoperation control','ABS, VSC and TRC',t.bags] },
+    ],
+    footnote:'Specifications from the manufacturer brochure. Features by trim to be confirmed with the brand before go-live.',
+    brochure:(t,c)=>`Toyota Yaris ${t.a} ${t.b}`,
+  },
+  {
+    id:'03t', brand:'iCAUR', brandLogo:'logo-icaur', name:'03T', ghostSize:540, ghostTop:110,
+    type:'All-road SUV',
+    tag:'Show your drive. An all-road extended-range electric SUV with up to 600 km total range.',
+    desc:'All-road REEV SUV, 315 kW',
+    imgW:1010, shadow:true, carBottom:96,
+    colors:[
+      { id:'yellow', name:'Sahara Yellow',   sub:'', hex:'#E2A21F', tint:'#E8A825', img:'icaur-sahara-yellow' },
+      { id:'black',  name:'Obsidian Black',  sub:'', hex:'#1C1D20', tint:'#4B5560', img:'icaur-obsidian-black' },
+      { id:'white',  name:'Moonstone White', sub:'', hex:'#E6E8EA', tint:'#C0CAD2', img:'icaur-moonstone-white' },
+      { id:'grey',   name:'Basalt Grey',     sub:'', hex:'#7C8B96', tint:'#7C8B96', img:'icaur-basalt-grey' },
+    ],
+    trims:[ { id:'royal', a:'REEV', b:'Royal Dual E-Motor AWD', c:'315 kW' } ],
+    defaultTrim:'royal', defaultColor:'yellow',
+    kpis:()=>[ {v:'315',u:'kW',l:'Combined power'}, {v:'600',u:'km',l:'Total range (WLTC)'}, {v:'5.5',u:'s',l:'0 to 100 km/h'}, {v:'AWD',u:'',l:'Dual electric motors'} ],
+    specs:()=>[
+      { title:'Powertrain', rows:[['Energy type','Extended-range electric vehicle (REEV)'],['Drive','Dual-motor intelligent AWD'],['Front motor','130 kW'],['Rear motor','185 kW'],['Combined power','315 kW (422 hp)'],['Max torque','505 Nm'],['0 to 100 km/h','5.5 s'],['Top speed','170 km/h'],['Range extender','1.5L turbo']] },
+      { title:'Battery, range and charging', rows:[['Battery','34.31 kWh, lithium iron phosphate'],['Total range (WLTC)','600 km'],['Electric range (NEDC)','144 km'],['AC charging','6.6 kW'],['DC charging','60 kW'],['DC 30 to 80%','20 min'],['External discharge (V2L)','6 kW'],['Fuel tank','45 L, RON 95']] },
+      { title:'Dimensions and weight', rows:[['Length x width x height','4,503 x 1,950 x 1,815 mm'],['Wheelbase','2,783 mm'],['Weight','2,045 kg'],['Ground clearance','220 mm'],['Approach / departure angle','22° / 30°'],['Seats','5'],['Boot capacity','450 L / 1,238 L (seats folded)']] },
+      { title:'Chassis', rows:[['Front suspension','MacPherson independent'],['Rear suspension','Multi-link independent'],['Adaptive damping','FSD adaptive damping suspension'],['Brakes','Front ventilated disc, rear disc'],['Tyres','265/45 R21']] },
+    ],
+    features:()=>[
+      { title:'Interior and comfort', items:['15.6-inch touchscreen and 9.2-inch digital cluster','50 W wireless phone charger','Multi-colour ambient lighting','PVC leather seats, ventilated 6-way power driver seat','Front centre armrest with cooling and heating','PM2.5 air purification, dual-zone climate control'] },
+      { title:'Exterior', items:['Anti-pinch panoramic sunroof with power sunshade','Automatic LED headlamps and LED daytime running lights','Power folding, heated exterior mirrors with memory','Roof rails'] },
+      { title:'Drive', items:['Sport, Normal and Eco drive modes','Mud, Sand, Snow and Mountain terrain modes'] },
+      { title:'Safety and connectivity', items:['ADAS Level 2 with 6 airbags','540° HD panoramic camera and built-in dash cam','Autonomous emergency braking, forward collision warning, blind spot detection, lane keeping assist','Hill start and hill descent control','Wireless Apple CarPlay and Android Auto, 8 speakers'] },
+    ],
+    footnote:'Specifications from the manufacturer brochure.',
+    brochure:()=>'iCAUR 03T Royal Dual E-Motor AWD',
+  },
+];
+
+/* ================= STATE ================= */
+const $ = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => [...r.querySelectorAll(s)];
+const state = { view:'fleet', car:0, sel:{}, tab:'specs', channel:'email', switching:false };
+CARS.forEach(c => state.sel[c.id] = { trim:c.defaultTrim, color:c.defaultColor });
+const car = () => CARS[state.car];
+const sel = () => state.sel[car().id];
+const curTrim = () => car().trims.find(t => t.id === sel().trim);
+const curColor = () => car().colors.find(c => c.id === sel().color);
+let scale = 1;
+
+const ARROW = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5l5 5L19.5 7"/></svg>';
+
+/* ================= SCALE ================= */
+function fit() {
+  scale = Math.min(innerWidth / 1920, innerHeight / 1080);
+  const app = $('#app');
+  app.style.transform = `translate(${(innerWidth - 1920*scale)/2}px, ${(innerHeight - 1080*scale)/2}px) scale(${scale})`;
+}
+addEventListener('resize', fit); fit();
+
+/* ================= FLEET ================= */
+function buildFleet() {
+  const wrap = $('#tiles'); wrap.innerHTML = '';
+  CARS.forEach((c, i) => {
+    const col = c.colors.find(x => x.id === c.defaultColor);
+    const t = document.createElement('button');
+    t.className = 'tile'; t.dataset.i = i; t.style.setProperty('--tint', col.tint);
+    t.innerHTML = `
+      <div class="ghostname" style="font-size:${c.id==='03t'?300:250}px">${c.name.toUpperCase()}</div>
+      <img class="carimg" src="${I(col.img)}" alt="${c.brand} ${c.name}">
+      <div class="meta">
+        <div class="l"><img src="${I(c.brandLogo)}" alt="${c.brand}"><div class="nm">${c.name}</div><div class="desc">${c.desc}</div></div>
+        <div class="go">${ARROW}</div>
+      </div>`;
+    soft($('.carimg', t), col.img);
+    t.addEventListener('click', () => openCar(i, t));
+    wrap.appendChild(t);
+  });
+}
+
+/* ================= SWITCH ================= */
+function buildSwitch() {
+  const sw = $('#carSwitch'); sw.innerHTML = '<div class="pill"></div>';
+  CARS.forEach((c, i) => {
+    const b = document.createElement('button'); b.dataset.i = i;
+    b.innerHTML = `<img class="${c.id==='03t'?'dk':''}" src="${I(c.brandLogo)}" alt=""><span class="nm">${c.name}</span>`;
+    b.addEventListener('click', () => goCar(i));
+    sw.appendChild(b);
+  });
+}
+function syncSwitch() {
+  const sw = $('#carSwitch'); const btns = $$('button', sw); const pill = $('.pill', sw);
+  btns.forEach((b, i) => b.classList.toggle('on', i === state.car));
+  const b = btns[state.car];
+  pill.style.width = b.offsetWidth + 'px';
+  pill.style.transform = `translateX(${b.offsetLeft - 8}px)`;
+  pill.style.left = '8px';
+}
+
+/* ================= DETAIL RENDER ================= */
+function fillStatic() {
+  const c = car();
+  $('#brandLogo').src = I(c.brandLogo);
+  $('#carName').textContent = `${c.brand === 'iCAUR' ? 'iCAUR ' : ''}${c.name}`;
+  $('#carTag').textContent = c.tag;
+  const gw = $('#ghostWord'); gw.textContent = c.name.toUpperCase(); gw.style.fontSize = c.ghostSize + 'px'; gw.style.top = c.ghostTop + 'px';
+  const img = $('#carwrap'); $$('img.car').forEach(im => im.style.width = c.imgW + 'px');
+  $$('img.car').forEach(im => im.style.bottom = c.carBottom + 'px');
+  $('#carShadow').style.display = c.shadow ? 'block' : 'none';
+  $('#trimLbl').textContent = c.trims.length > 1 ? 'Choose a trim' : 'Trim';
+  buildTrims(); buildSwatches(); buildKpis();
+}
+function buildTrims() {
+  const c = car(), wrap = $('#trims'); wrap.innerHTML = '';
+  c.trims.forEach(t => {
+    const b = document.createElement('button');
+    b.className = 'trim' + (t.id === sel().trim ? ' on' : '');
+    b.innerHTML = `<span class="a">${t.a}</span><span class="b">${t.b}</span><span class="c">${t.c}</span>`;
+    b.addEventListener('click', () => { sel().trim = t.id; $$('.trim', wrap).forEach(x => x.classList.toggle('on', x === b)); buildKpis(true); if (panelOpen()) renderPanel(true); });
+    wrap.appendChild(b);
+  });
+  if (c.trims.length === 1) { const only = $('.trim', wrap); only.style.height = 'auto'; only.style.padding = '22px 26px'; only.style.alignItems = 'flex-start'; only.style.flexDirection = 'column'; only.style.gap = '6px'; }
+}
+function buildSwatches() {
+  const c = car(), wrap = $('#swatches'); wrap.innerHTML = '';
+  c.colors.forEach(col => {
+    const b = document.createElement('button');
+    b.className = 'sw' + (col.id === sel().color ? ' on' : '');
+    b.setAttribute('aria-label', col.name);
+    b.innerHTML = `<i style="background:${col.hex}"></i>`;
+    b.addEventListener('click', () => setColor(col.id));
+    wrap.appendChild(b);
+  });
+  updateColorName();
+}
+function updateColorName() {
+  const col = curColor();
+  $('#colorName').innerHTML = col.name + (col.sub ? `<small>${col.sub}</small>` : '');
+}
+function buildKpis(animate) {
+  const c = car(), k = c.kpis(curTrim()), wrap = $('#kpis');
+  wrap.innerHTML = k.map(x => `<div class="kpi"><div class="v">${x.v}${x.u ? `<u>${x.u}</u>` : ''}</div><div class="t">${x.l}</div></div>`).join('');
+  if (animate) wrap.animate([{opacity:.2, transform:'translateY(8px)'},{opacity:1, transform:'none'}], {duration:400, easing:'cubic-bezier(.2,.8,.2,1)'});
+}
+
+let frontImg = 'carA';
+function showColorImage(instant) {
+  const col = curColor();
+  const cur = $('#' + frontImg), nxt = $('#' + (frontImg === 'carA' ? 'carB' : 'carA'));
+  nxt.src = I(col.img); soft(nxt, col.img);
+  const swap = () => { nxt.classList.remove('off'); cur.classList.add('off'); frontImg = nxt.id; };
+  if (instant) { nxt.style.transition = cur.style.transition = 'none'; swap(); requestAnimationFrame(() => { nxt.style.transition = cur.style.transition = ''; }); }
+  else if (nxt.decode) nxt.decode().then(swap, swap); else swap();
+  $('#detail').style.setProperty('--tint', col.tint);
+}
+function setColor(id) {
+  if (sel().color === id) return;
+  sel().color = id;
+  $$('.sw').forEach((b, i) => b.classList.toggle('on', car().colors[i].id === id));
+  updateColorName();
+  showColorImage(false);
+  if (panelOpen()) renderPanel(false);
+}
+
+/* ================= NAV ================= */
+function setView(v) {
+  state.view = v;
+  $('#fleet').classList.toggle('on', v === 'fleet');
+  $('#detail').classList.toggle('on', v === 'detail');
+  $('#backBtn').classList.toggle('hidden', v !== 'detail');
+  $('#carSwitch').classList.toggle('hidden', v !== 'detail');
+  $('#sendBtn').classList.toggle('hidden', v !== 'detail');
+  if (v === 'detail') requestAnimationFrame(syncSwitch);
+}
+
+function openCar(i, tileEl) {
+  state.car = i;
+  fillStatic(); showColorImage(true);
+  const fromImg = $('.carimg', tileEl);
+  const from = fromImg.getBoundingClientRect();
+  setView('detail');
+  const cw = $('#carwrap');
+  const to = $('#' + frontImg).getBoundingClientRect();
+  const s = from.width / to.width;
+  const dx = ((from.left + from.width/2) - (to.left + to.width/2)) / scale;
+  const dy = ((from.top + from.height/2) - (to.top + to.height/2)) / scale;
+  cw.animate([{ transform:`translateX(-50%) translate(${dx}px, ${dy}px) scale(${s})` }, { transform:'translateX(-50%)' }], { duration:750, easing:'cubic-bezier(.2,.8,.2,1)' });
+  ['#info', '#colors', '#kpis', '#ghostWord', '.navArrow'].forEach((sel_, k) => {
+    $$(sel_).forEach(el => el.animate([{ opacity:0, transform:'translateY(24px)' }, { opacity:1, transform:'none' }], { duration:600, delay:220 + k*50, easing:'cubic-bezier(.2,.8,.2,1)', fill:'backwards' }));
+  });
+}
+function toFleet() {
+  closePanel(); closeModal();
+  setView('fleet');
+  $$('.tile').forEach(t => t.animate([{ opacity:0, transform:'translateY(30px)' }, { opacity:1, transform:'none' }], { duration:600, easing:'cubic-bezier(.2,.8,.2,1)' }));
+}
+function goCar(i, dir) {
+  if (i === state.car || state.switching) return;
+  state.switching = true;
+  const d = dir || (i > state.car ? 1 : -1);
+  const groups = ['#carwrap', '#ghostWord', '#info', '#colors', '#kpis'].map(s => $(s));
+  const OUT = { duration:240, easing:'ease-in', fill:'forwards' };
+  groups.forEach(g => g.animate([{ opacity:1, transform: g.id === 'carwrap' ? 'translateX(-50%)' : 'none' }, { opacity:0, transform: g.id === 'carwrap' ? `translateX(calc(-50% + ${-d*120}px))` : `translateX(${-d*40}px)` }], OUT));
+  setTimeout(() => {
+    state.car = i;
+    fillStatic(); showColorImage(true); syncSwitch();
+    groups.forEach(g => g.getAnimations().forEach(a => a.cancel()));
+    groups.forEach((g, k) => g.animate([{ opacity:0, transform: g.id === 'carwrap' ? `translateX(calc(-50% + ${d*160}px))` : `translateX(${d*50}px)` }, { opacity:1, transform: g.id === 'carwrap' ? 'translateX(-50%)' : 'none' }], { duration:620, delay:k*30, easing:'cubic-bezier(.2,.8,.2,1)', fill:'backwards' }));
+    if (panelOpen()) renderPanel(true, true);
+    setTimeout(() => state.switching = false, 400);
+  }, 250);
+}
+const step = (d) => goCar((state.car + d + CARS.length) % CARS.length, d);
+
+/* ================= SWIPE ================= */
+(() => {
+  const stage = $('#stage'); const wrap = $('#carwrap');
+  let sx = 0, dx = 0, active = false, moved = false;
+  stage.addEventListener('pointerdown', e => { if (state.switching) return; active = true; moved = false; sx = e.clientX; dx = 0; stage.setPointerCapture(e.pointerId); });
+  stage.addEventListener('pointermove', e => {
+    if (!active) return;
+    dx = (e.clientX - sx) / scale;
+    if (Math.abs(dx) > 8) { moved = true; stage.classList.add('drag'); }
+    if (moved) { wrap.style.transform = `translateX(calc(-50% + ${dx*0.7}px))`; wrap.style.opacity = String(1 - Math.min(Math.abs(dx)/700, .5)); }
+  });
+  const end = () => {
+    if (!active) return; active = false; stage.classList.remove('drag');
+    if (moved && Math.abs(dx) > 150) {
+      const d = dx < 0 ? 1 : -1;
+      wrap.style.transform = ''; wrap.style.opacity = '';
+      step(d);
+    } else if (moved) {
+      wrap.animate([{ transform: wrap.style.transform, opacity: wrap.style.opacity || 1 }, { transform:'translateX(-50%)', opacity:1 }], { duration:400, easing:'cubic-bezier(.2,.8,.2,1)' });
+      wrap.style.transform = ''; wrap.style.opacity = '';
+    }
+  };
+  stage.addEventListener('pointerup', end); stage.addEventListener('pointercancel', end);
+})();
+addEventListener('keydown', e => {
+  if (state.view !== 'detail' || panelOpen() || modalOpen()) { if (e.key === 'Escape') { closePanel(); closeModal(); } return; }
+  if (e.key === 'ArrowRight') step(1);
+  if (e.key === 'ArrowLeft') step(-1);
+  if (e.key === 'Escape') toFleet();
+});
+
+/* ================= SPEC PANEL ================= */
+const panelOpen = () => $('#panel').classList.contains('on');
+function openPanel() { renderPanel(true); $('#panel').classList.add('on'); $('#scrim').classList.add('on'); }
+function closePanel() { $('#panel').classList.remove('on'); if (!modalOpen()) $('#scrim').classList.remove('on'); }
+function renderPanel(reset, keepScroll) {
+  const c = car(), t = curTrim();
+  $('#pTitle').textContent = `${c.brand === 'iCAUR' ? 'iCAUR ' : 'Toyota '}${c.name}`;
+  $('#pSub').textContent = c.trims.length > 1 ? `${t.a} ${t.b}` : t.b;
+  $$('#ptabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === state.tab));
+  const pt = $('#ptrims'); pt.innerHTML = '';
+  pt.style.display = c.trims.length > 1 ? 'flex' : 'none';
+  if (c.trims.length > 1) c.trims.forEach(x => {
+    const b = document.createElement('button'); b.className = 'chip' + (x.id === sel().trim ? ' on' : ''); b.textContent = `${x.a} ${x.b}`;
+    b.addEventListener('click', () => { sel().trim = x.id; buildTrims(); buildKpis(true); renderPanel(false); });
+    pt.appendChild(b);
+  });
+  const body = $('#pbody');
+  const prev = body.scrollTop;
+  let html = '';
+  if (state.tab === 'specs') {
+    html = c.specs(t).map(s => `<div class="sec"><h3>${s.title}</h3>${s.rows.map(r => `<div class="row"><span class="k">${r[0]}</span><span class="val">${r[1]}</span></div>`).join('')}</div>`).join('');
+  } else {
+    html = c.features(t).map(s => `<div class="sec"><h3>${s.title}</h3>${s.items.map(i => `<div class="feat">${CHECK}<span>${i}</span></div>`).join('')}</div>`).join('');
+  }
+  html += `<p class="foot">${c.footnote}</p>`;
+  body.innerHTML = html;
+  body.scrollTop = keepScroll || !reset ? prev : 0;
+  if (reset) body.firstElementChild && $$('.sec', body).forEach((s, k) => s.animate([{ opacity:0, transform:'translateY(18px)' }, { opacity:1, transform:'none' }], { duration:500, delay:120 + k*60, easing:'cubic-bezier(.2,.8,.2,1)', fill:'backwards' }));
+}
+$('#pClose').addEventListener('click', closePanel);
+$('#scrim').addEventListener('click', () => { closePanel(); closeModal(); });
+$$('#ptabs button').forEach(b => b.addEventListener('click', () => { state.tab = b.dataset.tab; renderPanel(true); }));
+$('#allSpecs').addEventListener('click', openPanel);
+
+/* ================= SEND MODAL ================= */
+const modalOpen = () => $('#modalWrap').classList.contains('on');
+function openModal() {
+  const c = car(), t = curTrim(), col = curColor();
+  $('#mLogo').src = I(c.brandLogo);
+  $('#mCar').src = I(col.img); soft($('#mCar'), col.img);
+  $('#mName').textContent = c.brochure(t, col);
+  $('#mDesc').textContent = `${col.name}${col.sub ? ', ' + col.sub.toLowerCase() : ''}`;
+  $('#mFile').textContent = `KVL_${c.brochure(t, col).replace(/[^A-Za-z0-9.]+/g, '-')}.pdf`;
+  $('#modalWrap').style.setProperty('--mtint', col.tint);
+  $('#mLeft').style.setProperty('--mtint', col.tint);
+  resetForm();
+  $('#modalWrap').classList.add('on');
+}
+function closeModal() { $('#modalWrap').classList.remove('on'); }
+function resetForm() {
+  $('#modal').classList.remove('sent'); $('#sendGo').classList.remove('sending');
+  $('#inName').value = ''; $('#inContact').value = '';
+  $('#consent').classList.remove('on');
+  $$('.field').forEach(f => f.classList.remove('err'));
+  setChannel('email');
+}
+function setChannel(ch) {
+  state.channel = ch;
+  $$('#seg button').forEach(b => b.classList.toggle('on', b.dataset.ch === ch));
+  $('#seg .pill').style.transform = ch === 'email' ? 'translateX(0)' : 'translateX(200px)';
+  const inp = $('#inContact');
+  inp.type = ch === 'email' ? 'email' : 'tel';
+  inp.placeholder = ch === 'email' ? 'Email address' : 'WhatsApp number';
+  inp.inputMode = ch === 'email' ? 'email' : 'tel';
+  $('#pre').classList.toggle('hidden', ch === 'email');
+  inp.value = '';
+  $('#fContact').classList.remove('err');
+}
+$$('#seg button').forEach(b => b.addEventListener('click', () => setChannel(b.dataset.ch)));
+$('#consent').addEventListener('click', () => { $('#consent').classList.toggle('on'); });
+$('#sendBtn').addEventListener('click', openModal);
+$('#mClose').addEventListener('click', closeModal);
+$('#doneBtn').addEventListener('click', closeModal);
+$('#again').addEventListener('click', resetForm);
+$('#modalWrap').addEventListener('click', e => { if (e.target.id === 'modalWrap') closeModal(); });
+
+$('#sendGo').addEventListener('click', () => {
+  const v = $('#inContact').value.trim();
+  const ok = state.channel === 'email' ? /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) : v.replace(/\D/g, '').length >= 8;
+  $('#fContact').classList.toggle('err', !ok);
+  if (!ok) { $('#fContact').animate([{transform:'translateX(0)'},{transform:'translateX(-10px)'},{transform:'translateX(10px)'},{transform:'translateX(-6px)'},{transform:'none'}], {duration:360}); return; }
+  const btn = $('#sendGo'); btn.classList.add('sending');
+  setTimeout(() => {
+    btn.classList.remove('sending');
+    const c = car(), t = curTrim(), col = curColor();
+    const name = $('#inName').value.trim();
+    const hi = name ? `Hi ${name.split(' ')[0]}` : 'Hello';
+    const car_ = c.brochure(t, col);
+    const isMail = state.channel === 'email';
+    const dest = isMail ? v : '+973 ' + v.replace(/^\+?973/, '').trim();
+    $('#doneH').textContent = isMail ? 'Brochure emailed' : 'Brochure sent on WhatsApp';
+    $('#doneS').textContent = `Sent to ${dest}. Simulated in this demo.`;
+    const b = $('#bubble'); b.className = 'bubble' + (isMail ? ' mail' : '');
+    b.innerHTML = isMail
+      ? `<b>Your ${car_} brochure, from Kanoo Vehicle Leasing</b>${hi}, thank you for visiting us today. The ${car_} brochure in ${col.name} is attached.`
+      : `${hi}, thanks for visiting Kanoo Vehicle Leasing today. Here is the brochure for the ${car_} in ${col.name}.`;
+    $('#modal').classList.add('sent');
+  }, 1400);
+});
+
+/* ================= INIT ================= */
+$('#logoImg').src = I('logo-kvl');
+$('#logoBtn').addEventListener('click', () => { if (state.view === 'detail') toFleet(); });
+$('#backBtn').addEventListener('click', toFleet);
+$('#prevBtn').addEventListener('click', () => step(-1));
+$('#nextBtn').addEventListener('click', () => step(1));
+buildFleet(); buildSwitch();
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (state.view === 'detail') syncSwitch(); });
+</script>
+</body>
+</html>
